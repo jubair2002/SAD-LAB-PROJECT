@@ -21,3 +21,6 @@ chatting ----------->message.php, chat_api.php, chat_function.php, file_upload.p
 notification ------->get--notification.php , mark -notification -read .php , get-notification-count.php ,
 						notification pop up auto refresh in every 30 second
 						send-notification.php 
+
+
+volunteer assignment----> update_assignment.php  , assignments.php accept or reject

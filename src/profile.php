@@ -153,26 +153,7 @@ if (isset($_POST['upload_picture']) && isset($_FILES['picture'])) {
 </head>
 
 <body>
-    <div class="profile-dashboard">
-        <!-- Left Sidebar -->
-        <div class="profile-sidebar">
-            <div class="sidebar-header">
-                <div class="profile-img-container">
-                    <img src="<?php echo htmlspecialchars($user['picture'] ?: 'assets/images/default-avatar.png'); ?>?v=<?php echo time(); ?>" alt="Profile Picture" class="profile-img"> <label for="picture-upload" class="camera-icon">
-                        <i class="fas fa-camera"></i>
-                    </label>
-                </div>
-                <h2 class="profile-name"><?php echo htmlspecialchars($user['fname'] . ' ' . $user['lname']); ?></h2>
-                <p class="profile-email"><?php echo htmlspecialchars($user['email']); ?></p>
-            </div>
-
-            <div class="sidebar-menu">
-                <div class="menu-item active" data-tab="profile-info">
-                    <i class="fas fa-user"></i>
-                    <span>Profile Info</span>
-                </div>
-            </div>
-        </div>
+   
 
         <!-- Main Content Area -->
         <div class="profile-content">

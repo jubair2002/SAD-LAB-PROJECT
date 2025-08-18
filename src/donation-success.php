@@ -30,26 +30,27 @@ $current_time = date('g:i A');
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
     <title>Donation Successful - <?php echo htmlspecialchars($campaign['name']); ?></title>
-    
+
     <!-- External CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="assets/css/donation.css">
-    
+
     <style>
         /* Additional success page optimizations */
         @media (max-width: 768px) {
             .success-container {
                 padding: 30px 20px;
             }
-            
+
             .success-title {
                 font-size: 28px;
             }
-            
+
             .social-buttons {
                 flex-wrap: wrap;
                 justify-content: center;
@@ -57,6 +58,7 @@ $current_time = date('g:i A');
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="success-container donation-success">
@@ -86,7 +88,7 @@ $current_time = date('g:i A');
 
             <div class="receipt-info">
                 <h4 style="margin-bottom: 15px; color: var(--donation-dark);">
-                    <i class="fas fa-receipt" style="color: var(--donation-primary);"></i> 
+                    <i class="fas fa-receipt" style="color: var(--donation-primary);"></i>
                     Transaction Details
                 </h4>
                 <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: left; display: inline-block; min-width: 300px;">
@@ -171,7 +173,7 @@ $current_time = date('g:i A');
     <!-- External Libraries for PDF Generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    
+
     <!-- Pass PHP variables to JavaScript -->
     <script>
         // Global donation data for sharing
@@ -182,14 +184,15 @@ $current_time = date('g:i A');
             date: '<?php echo $current_date; ?>',
             time: '<?php echo $current_time; ?>'
         };
-        
+
         // Auto-scroll to top on page load
         window.scrollTo(0, 0);
     </script>
-    
+
     <!-- External JavaScript -->
     <script src="assets/js/donation.js"></script>
 </body>
+
 </html>
 
 <?php

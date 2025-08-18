@@ -128,7 +128,7 @@ $page_file = $current_page . '.php';
             <li <?php echo ($current_page == 'transections') ? 'class="active"' : ''; ?>>
                 <a href="?page=transections">
                     <i class='bx bxs-credit-card'></i>
-                    <span class="text">transections</span>
+                    <span class="text">Transections</span>
                 </a>
             </li>
         </ul>

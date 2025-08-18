@@ -9,7 +9,7 @@ checkAccess('volunteer');
 $user = getUserDetails($conn, $_SESSION['user_id']);
 
 $current_page = isset($_GET['page']) ? $_GET['page'] : 'dashboardSummaryVR';
-$valid_pages = ['dashboardSummaryVR', 'createCampaign1','assignments', 'message', 'campaign', 'reports', 'emergency', 'settings', 'profile'];
+$valid_pages = ['dashboardSummaryVR', 'createCampaign1','assignments','leaderboardVolunteer', 'message', 'campaign', 'reports', 'emergency', 'settings', 'profile'];
 
 // Validate the page parameter
 if (!in_array($current_page, $valid_pages)) {
@@ -140,6 +140,12 @@ $page_file = $current_page . '.php';
                 <a href="?page=reports">
                     <i class='bx bxs-file'></i>
                     <span class="text">Report</span>
+                </a>
+            </li>
+            <li <?php echo ($current_page == 'leaderboardVolunteer') ? 'class="active"' : ''; ?>>
+                <a href="?page=leaderboardVolunteer">
+                    <i class='bx bxs-file'></i>
+                    <span class="text">My Leaderboard</span>
                 </a>
             </li>
             <li <?php echo ($current_page == 'emergency') ? 'class="active"' : ''; ?>>

@@ -270,20 +270,45 @@ class ChatSystem {
     
     // Add volunteer to campaign chat
     public function addVolunteerToCampaignChat($campaignId, $volunteerId, $adminId) {
-        $chatId = $this->getOrCreateCampaignChat($campaignId, $adminId);
-        
-        if ($chatId) {
-            $this->addParticipant($chatId, $volunteerId);
+        try {
+            $chatId = $this->getOrCreateCampaignChat($campaignId, $adminId);
             
-            // Send a welcome message
-            $volunteerName = $this->getUserName($volunteerId);
-            $message = "Volunteer $volunteerName has been added to this campaign chat.";
-            $this->sendMessage($chatId, $adminId, $message, false);
+            if ($chatId) {
+                $this->addParticipant($chatId, $volunteerId);
+                
+                // Send a welcome message
+                $volunteerName = $this->getUserName($volunteerId);
+                $message = "Volunteer $volunteerName has been assigned to this campaign and added to the group chat.";
+                $this->sendMessage($chatId, $adminId, $message, false);
+                
+                return true;
+            }
             
-            return true;
+            return false;
+        } catch (Exception $e) {
+            // Create chat tables if they don't exist
+            $this->createChatTables();
+            
+            // Try again after creating tables
+            try {
+                $chatId = $this->getOrCreateCampaignChat($campaignId, $adminId);
+                
+                if ($chatId) {
+                    $this->addParticipant($chatId, $volunteerId);
+                    
+                    $volunteerName = $this->getUserName($volunteerId);
+                    $message = "Volunteer $volunteerName has been assigned to this campaign and added to the group chat.";
+                    $this->sendMessage($chatId, $adminId, $message, false);
+                    
+                    return true;
+                }
+            } catch (Exception $e2) {
+                error_log("Failed to add volunteer to campaign chat even after creating tables: " . $e2->getMessage());
+                return false;
+            }
+            
+            return false;
         }
-        
-        return false;
     }
     
     // Helper to get user name
@@ -304,4 +329,61 @@ class ChatSystem {
         
         return "Unknown";
     }
+    
+    // Create chat tables if they don't exist (MySQL syntax)
+    private function createChatTables() {
+        $chatRoomsTable = "
+            CREATE TABLE IF NOT EXISTS chat_rooms (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                type ENUM('global', 'private', 'campaign') NOT NULL DEFAULT 'private',
+                campaign_id INT DEFAULT NULL,
+                created_by INT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_created_by (created_by),
+                INDEX idx_campaign_id (campaign_id),
+                FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE SET NULL
+            )
+        ";
+        
+        $chatParticipantsTable = "
+            CREATE TABLE IF NOT EXISTS chat_participants (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                chat_room_id INT NOT NULL,
+                user_id INT NOT NULL,
+                joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                last_read_at TIMESTAMP NULL DEFAULT NULL,
+                UNIQUE KEY unique_participant (chat_room_id, user_id),
+                INDEX idx_chat_room (chat_room_id),
+                INDEX idx_user (user_id),
+                FOREIGN KEY (chat_room_id) REFERENCES chat_rooms(id) ON DELETE CASCADE,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        ";
+        
+        $messagesTable = "
+            CREATE TABLE IF NOT EXISTS messages (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                chat_room_id INT NOT NULL,
+                user_id INT NOT NULL,
+                message TEXT NOT NULL,
+                is_emergency TINYINT(1) NOT NULL DEFAULT 0,
+                attachment_url VARCHAR(500) DEFAULT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_chat_room (chat_room_id),
+                INDEX idx_user (user_id),
+                INDEX idx_created_at (created_at),
+                INDEX idx_emergency (is_emergency),
+                FOREIGN KEY (chat_room_id) REFERENCES chat_rooms(id) ON DELETE CASCADE,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        ";
+        
+        $this->conn->query($chatRoomsTable);
+        $this->conn->query($chatParticipantsTable);
+        $this->conn->query($messagesTable);
+    }
 }
+?>

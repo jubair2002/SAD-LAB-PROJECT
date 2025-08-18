@@ -7,13 +7,12 @@ checkAccess('regular');
 // Get user details
 $user = getUserDetails($conn, $_SESSION['user_id']);
 
-// Get current page from URL parameter or use dashboard as default
-$current_page = isset($_GET['page']) ? $_GET['page'] : 'dashboardSummaryVR';
-$valid_pages = ['dashboardSummaryVR', 'message', 'reports', 'campaign', 'profile', 'settings', 'emergency'];
+$current_page = isset($_GET['page']) ? $_GET['page'] : 'dashboardSummaryRegular';
+$valid_pages = ['dashboardSummaryRegular', 'message', 'reports', 'campaign', 'guideForUser','profile', 'settings', 'emergency'];
 
 // Validate the page parameter
 if (!in_array($current_page, $valid_pages)) {
-    $current_page = 'dashboardSummaryVR';
+    $current_page = 'dashboardSummaryRegular';
 }
 
 // Set the page file to load
@@ -106,8 +105,8 @@ $page_file = $current_page . '.php';
             <span class="text">CrisisLink Network</span>
         </a>
         <ul class="side-menu top">
-            <li <?php echo ($current_page == 'dashboardSummaryVR') ? 'class="active"' : ''; ?>>
-                <a href="?page=dashboardSummaryVR">
+            <li <?php echo ($current_page == 'dashboardSummaryRegular') ? 'class="active"' : ''; ?>>
+                <a href="?page=dashboardSummaryRegular">
                     <i class='bx bxs-home'></i>
                     <span class="text">Dashboard Summary</span>
                 </a>
@@ -134,6 +133,12 @@ $page_file = $current_page . '.php';
                 <a href="?page=campaign">
                     <i class='bx bxs-message-dots'></i>
                     <span class="text">Campaign</span>
+                </a>
+            </li>
+            <li <?php echo ($current_page == 'guideForUser') ? 'class="active"' : ''; ?>>
+                <a href="?page=guideForUser">
+                    <i class='bx bxs-message-dots'></i>
+                    <span class="text">Guidence</span>
                 </a>
             </li>
 

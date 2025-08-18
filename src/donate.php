@@ -26,6 +26,9 @@ $campaign = $result->fetch_assoc();
 // Check if user is logged in
 $user_logged_in = isset($_SESSION['user_id']);
 $user_id = $user_logged_in ? $_SESSION['user_id'] : 0;
+
+// Determine if anonymous option should be shown (always show if not logged in, or if logged in)
+$show_anonymous_option = true; 
 ?>
 
 <!DOCTYPE html>
@@ -52,6 +55,39 @@ $user_id = $user_logged_in ? $_SESSION['user_id'] : 0;
                 transform: none;
                 align-self: center;
             }
+        }
+        /* Style for the anonymous donation checkbox */
+        .anonymous-option {
+            margin-top: 20px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f0f8ff; /* Light blue background */
+            border-left: 5px solid var(--donation-primary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 15px;
+            color: #333;
+        }
+        .anonymous-option input[type="checkbox"] {
+            transform: scale(1.2);
+            accent-color: var(--donation-primary);
+        }
+        .anonymous-option label {
+            cursor: pointer;
+            font-weight: 500;
+        }
+        /* Hide fields when anonymous is selected */
+        .personal-info-fields.hidden {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease-out;
+        }
+        .personal-info-fields.visible {
+            display: block;
+            opacity: 1;
+            transition: opacity 0.3s ease-in;
         }
     </style>
 </head>
@@ -83,7 +119,7 @@ $user_id = $user_logged_in ? $_SESSION['user_id'] : 0;
                 </div>
                 <div class="campaign-details">
                     <h2><?php echo htmlspecialchars($campaign['name']); ?></h2>
-                    <p>You are donating: <span class="donation-amount">$<span id="display-amount"><?php echo number_format($amount, 2); ?></span></span></p>
+                    <p>You are donating: <span class="donation-amount"><span id="display-amount"><?php echo number_format($amount, 2); ?></span></span></p>
                     <p style="margin-top: 10px; color: #666; font-size: 14px;">
                         <i class="fas fa-shield-alt" style="color: var(--donation-primary);"></i> 
                         Your donation is secure and goes directly to this campaign.
@@ -101,22 +137,32 @@ $user_id = $user_logged_in ? $_SESSION['user_id'] : 0;
                     <input type="number" id="amount" name="amount" min="1" step="0.01" value="<?php echo $amount; ?>" required placeholder="Enter amount (minimum $1.00)">
                 </div>
 
+                <?php if ($show_anonymous_option): ?>
+                    <div class="anonymous-option">
+                        <input type="checkbox" id="anonymous_donation" name="is_anonymous" value="1">
+                        <label for="anonymous_donation">Donate Anonymously</label>
+                        <i class="fas fa-question-circle" title="Your name and email will not be saved with this donation."></i>
+                    </div>
+                <?php endif; ?>
+
                 <?php if (!$user_logged_in): ?>
-                    <div class="row">
-                        <div class="col">
-                            <div class="form-group">
-                                <label for="name">
-                                    <i class="fas fa-user"></i> Full Name
-                                </label>
-                                <input type="text" id="name" name="name" required placeholder="Enter your full name">
+                    <div class="personal-info-fields" id="guest-fields">
+                        <div class="row">
+                            <div class="col">
+                                <div class="form-group">
+                                    <label for="name">
+                                        <i class="fas fa-user"></i> Full Name
+                                    </label>
+                                    <input type="text" id="name" name="name" required placeholder="Enter your full name">
+                                </div>
                             </div>
-                        </div>
-                        <div class="col">
-                            <div class="form-group">
-                                <label for="email">
-                                    <i class="fas fa-envelope"></i> Email Address
-                                </label>
-                                <input type="email" id="email" name="email" required placeholder="Enter your email address">
+                            <div class="col">
+                                <div class="form-group">
+                                    <label for="email">
+                                        <i class="fas fa-envelope"></i> Email Address
+                                    </label>
+                                    <input type="email" id="email" name="email" required placeholder="Enter your email address">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -157,7 +203,7 @@ $user_id = $user_logged_in ? $_SESSION['user_id'] : 0;
                 </div>
 
                 <!-- Credit/Debit Card Fields -->
-                <div class="payment-fields" id="card-fields">
+                <div class="payment-fields" id="card-fields" style="display: none;">
                     <h4 style="margin-bottom: 20px; color: var(--donation-dark);">
                         <i class="fas fa-lock" style="color: var(--donation-primary);"></i> 
                         Card Information
@@ -183,7 +229,7 @@ $user_id = $user_logged_in ? $_SESSION['user_id'] : 0;
                 </div>
 
                 <!-- Mobile Banking Fields -->
-                <div class="payment-fields" id="mobile-fields">
+                <div class="payment-fields" id="mobile-fields" style="display: none;">
                     <h4 style="margin-bottom: 20px; color: var(--donation-dark);">
                         <i class="fas fa-mobile-alt" style="color: var(--donation-primary);"></i> 
                         Mobile Banking Details
@@ -211,7 +257,7 @@ $user_id = $user_logged_in ? $_SESSION['user_id'] : 0;
                 </div>
 
                 <!-- Bank Transfer Fields -->
-                <div class="payment-fields" id="bank-fields">
+                <div class="payment-fields" id="bank-fields" style="display: none;">
                     <h4 style="margin-bottom: 20px; color: var(--donation-dark);">
                         <i class="fas fa-university" style="color: var(--donation-primary);"></i> 
                         Bank Transfer Details
@@ -271,7 +317,8 @@ $user_id = $user_logged_in ? $_SESSION['user_id'] : 0;
             id: <?php echo $campaign_id; ?>,
             name: '<?php echo addslashes($campaign['name']); ?>',
             imageUrl: '<?php echo addslashes($campaign['image_url']); ?>',
-            userLoggedIn: <?php echo $user_logged_in ? 'true' : 'false'; ?>
+            userLoggedIn: <?php echo $user_logged_in ? 'true' : 'false'; ?>,
+            showAnonymousOption: <?php echo $show_anonymous_option ? 'true' : 'false'; ?>
         };
     </script>
     

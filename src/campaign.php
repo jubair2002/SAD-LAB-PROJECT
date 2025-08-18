@@ -1,18 +1,20 @@
-<?php 
+<?php
 // Include the database configuration file
-require_once 'config.php';  
+require_once 'config.php';
 
-// Query to fetch all campaigns
-$sql = "SELECT * FROM campaigns ORDER BY created_at DESC LIMIT 6"; 
-$result = $conn->query($sql);  
+//  fetch all campaigns
+$sql = "SELECT * FROM campaigns ORDER BY created_at DESC LIMIT 6";
+$result = $conn->query($sql);
 
-// Function to calculate percentage
-function calculatePercentage($raised, $goal) {     
-    return min(100, round(($raised / $goal) * 100)); 
-} 
+//calculate percentage
+function calculatePercentage($raised, $goal)
+{
+    return min(100, round(($raised / $goal) * 100));
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
@@ -20,36 +22,39 @@ function calculatePercentage($raised, $goal) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="assets/css/campaign.css">
     <style>
-        /* Additional inline styles to ensure full screen */
-        html, body {
+        html,
+        body {
+            height: auto;
+            width: 100%;
             margin: 0;
             padding: 0;
-            height: 100vh;
-            width: 100vw;
             overflow-x: hidden;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            overflow-y: auto;
         }
-        
+
         .container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            width: 100vw;
-            height: 100vh;
-            margin: 0;
-            padding: 0;
-            max-width: none;
+            margin: 0 auto;
+            padding: 20px;
+            height: auto;
+            overflow-y: visible;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #f9f9f9;
+            color: #333;
+            line-height: 1.6;
+            position: relative;
+            width: 100%;
+            max-width: 100%;
         }
 
         .cause-card {
             position: relative;
         }
+
         .campaign-status {
             position: absolute;
             top: 15px;
@@ -61,10 +66,11 @@ function calculatePercentage($raised, $goal) {
             padding: 6px 12px;
             border-radius: 20px;
             backdrop-filter: blur(10px);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             font-size: 12px;
             font-weight: 600;
         }
+
         .status-icon {
             width: 8px;
             height: 8px;
@@ -72,19 +78,31 @@ function calculatePercentage($raised, $goal) {
             margin-left: 6px;
             animation: pulse 2s infinite;
         }
+
         .status-active {
-            background-color: #2ecc71; /* Green for active */
+            background-color: #2ecc71;
+            /* Green for active */
         }
+
         .status-end {
-            background-color: #e74c3c; /* Red for completed */
+            background-color: #e74c3c;
+            /* Red for completed */
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
@@ -93,7 +111,7 @@ function calculatePercentage($raised, $goal) {
                 <i class="fas fa-list"></i> All Campaigns
             </a>
         </div>
-        
+
         <div class="causes-grid">
             <?php
             // Check if there are campaigns in the database
@@ -102,46 +120,46 @@ function calculatePercentage($raised, $goal) {
                 while ($row = $result->fetch_assoc()) {
                     // Calculate progress percentage
                     $percentage = calculatePercentage($row['raised'], $row['goal']);
-                    
+
                     // Determine status and color
                     $status = 'Ongoing';
                     $statusClass = 'status-active';
-                    
+
                     if ($row['progress'] == 'end') {
                         $status = 'Ended';
                         $statusClass = 'status-end';
                     }
             ?>
-                <div class="cause-card">
-                    <div class="campaign-status">
-                        <span><?php echo $status; ?></span>
-                        <div class="status-icon <?php echo $statusClass; ?>"></div>
-                    </div>
-                    <div class="cause-image">
-                        <img src="<?php echo htmlspecialchars($row['image_url']); ?>" alt="<?php echo htmlspecialchars($row['name']); ?>" style="width:100%; height:auto;">
-                    </div>
-                    <div class="cause-content">
-                        <h3 class="cause-title"><?php echo htmlspecialchars($row['name']); ?></h3>
-                        <p class="cause-description"><?php echo htmlspecialchars(substr($row['description'], 0, 120)) . '...'; ?></p>
-                        <div class="progress-bar">
-                            <div class="progress" style="width: <?php echo $percentage; ?>%; background: <?php echo isset($row['progress_color']) ? $row['progress_color'] : 'linear-gradient(90deg, #4CAF50, #45a049)'; ?>"></div>
+                    <div class="cause-card">
+                        <div class="campaign-status">
+                            <span><?php echo $status; ?></span>
+                            <div class="status-icon <?php echo $statusClass; ?>"></div>
                         </div>
-                        <div class="cause-stats">
-                            <div class="stats-left">
-                                <div class="goal">Goal: $<?php echo number_format($row['goal'], 0); ?></div>
-                                <div class="raised">Raised: $<?php echo number_format($row['raised'], 0); ?></div>
-                            </div>
-                            <div class="stats-right">
-                                <div class="donors"><?php echo $row['donation_count']; ?> donations</div>
-                            </div>
+                        <div class="cause-image">
+                            <img src="<?php echo htmlspecialchars($row['image_url']); ?>" alt="<?php echo htmlspecialchars($row['name']); ?>" style="width:100%; height:auto;">
                         </div>
-                        <div class="spacer"></div>
-                        <a href="campaign-details.php?id=<?php echo $row['id']; ?>" class="view-details-btn">
-                            <i class="fas fa-eye"></i> VIEW DETAILS
-                        </a>
+                        <div class="cause-content">
+                            <h3 class="cause-title"><?php echo htmlspecialchars($row['name']); ?></h3>
+                            <p class="cause-description"><?php echo htmlspecialchars(substr($row['description'], 0, 120)) . '...'; ?></p>
+                            <div class="progress-bar">
+                                <div class="progress" style="width: <?php echo $percentage; ?>%; background: <?php echo isset($row['progress_color']) ? $row['progress_color'] : 'linear-gradient(90deg, #4CAF50, #45a049)'; ?>"></div>
+                            </div>
+                            <div class="cause-stats">
+                                <div class="stats-left">
+                                    <div class="goal">Goal: $<?php echo number_format($row['goal'], 0); ?></div>
+                                    <div class="raised">Raised: $<?php echo number_format($row['raised'], 0); ?></div>
+                                </div>
+                                <div class="stats-right">
+                                    <div class="donors"><?php echo $row['donation_count']; ?> donations</div>
+                                </div>
+                            </div>
+                            <div class="spacer"></div>
+                            <a href="campaign-details.php?id=<?php echo $row['id']; ?>" class="view-details-btn">
+                                <i class="fas fa-eye"></i> VIEW DETAILS
+                            </a>
+                        </div>
                     </div>
-                </div>
-            <?php 
+            <?php
                 }
             } else {
                 echo "<div class='no-campaigns'>";
@@ -185,26 +203,13 @@ function calculatePercentage($raised, $goal) {
                 lastTouchEnd = now;
             }, false);
 
-            // Adjust viewport height for full screen
-            adjustViewportHeight();
+
 
             // Handle orientation change
-            window.addEventListener('orientationchange', function() {
-                setTimeout(adjustViewportHeight, 100);
-            });
-
-            // Handle resize
-            window.addEventListener('resize', adjustViewportHeight);
+            window.addEventListener('orientationchange', function() {});
         }
 
-        function adjustViewportHeight() {
-            const vh = window.innerHeight;
-            document.body.style.height = vh + 'px';
-            const container = document.querySelector('.container');
-            if (container) {
-                container.style.height = vh + 'px';
-            }
-        }
+
 
         function initializeAnimations() {
             // Add intersection observer for card animations
@@ -224,6 +229,10 @@ function calculatePercentage($raised, $goal) {
             });
         }
 
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeAnimations();
+        });
+
         // Add loading state to view details buttons
         document.addEventListener('click', function(e) {
             if (e.target.closest('.view-details-btn')) {
@@ -231,7 +240,7 @@ function calculatePercentage($raised, $goal) {
                 const originalContent = btn.innerHTML;
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
                 btn.style.pointerEvents = 'none';
-                
+
                 // Reset if navigation fails
                 setTimeout(() => {
                     btn.innerHTML = originalContent;
@@ -241,8 +250,9 @@ function calculatePercentage($raised, $goal) {
         });
     </script>
 </body>
+
 </html>
-<?php 
+<?php
 // Close the database connection
-$conn->close(); 
+$conn->close();
 ?>

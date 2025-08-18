@@ -13,11 +13,13 @@ function generateTransactionId($id) {
 $filter = $_GET['filter'] ?? 'all';
 
 // Base query
-$query = "SELECT d.id, d.amount, d.donation_type, d.donation_date,
+// Changed INNER JOIN to LEFT JOIN to include donations with NULL user_id (anonymous donations)
+// Added d.is_anonymous to the SELECT clause
+$query = "SELECT d.id, d.amount, d.donation_type, d.donation_date, d.is_anonymous,
                  CONCAT(u.fname, ' ', u.lname) as user_name, u.email, u.phone, u.picture,
                  c.name as campaign_name
           FROM donations d
-          JOIN users u ON d.user_id = u.id
+          LEFT JOIN users u ON d.user_id = u.id
           JOIN campaigns c ON d.campaign_id = c.id";
 
 // Apply filter
@@ -37,6 +39,12 @@ if ($filter !== 'all') {
         case 'debit_card':
         case 'bank_transfer':
             $query .= " WHERE d.donation_type = '$filter'";
+            break;
+        case 'anonymous': // New filter for anonymous donations
+            $query .= " WHERE d.is_anonymous = TRUE";
+            break;
+        case 'registered': // New filter for registered user donations
+            $query .= " WHERE d.is_anonymous = FALSE";
             break;
     }
 }
@@ -188,6 +196,9 @@ tr:hover {
     margin-right: 12px;
     overflow: hidden;
     flex-shrink: 0;
+    color: #64748b; /* For initials */
+    font-weight: bold;
+    font-size: 14px;
 }
 
 .user-avatar img {
@@ -338,6 +349,8 @@ tbody {
                         <option value="credit_card" <?php echo $filter === 'credit_card' ? 'selected' : ''; ?>>Credit Card</option>
                         <option value="debit_card" <?php echo $filter === 'debit_card' ? 'selected' : ''; ?>>Debit Card</option>
                         <option value="bank_transfer" <?php echo $filter === 'bank_transfer' ? 'selected' : ''; ?>>Bank Transfer</option>
+                        <option value="anonymous" <?php echo $filter === 'anonymous' ? 'selected' : ''; ?>>Anonymous Donations</option>
+                        <option value="registered" <?php echo $filter === 'registered' ? 'selected' : ''; ?>>Registered User Donations</option>
                     </select>
                 </form>
             </div>
@@ -348,7 +361,7 @@ tbody {
                         <thead>
                             <tr>
                                 <th>Transaction ID</th>
-                                <th>User</th>
+                                <th>Donor</th>
                                 <th>Campaign</th>
                                 <th>Amount</th>
                                 <th>Payment Method</th>
@@ -359,27 +372,44 @@ tbody {
                             <?php if (mysqli_num_rows($result) > 0): ?>
                                 <?php while ($row = mysqli_fetch_assoc($result)): 
                                     $transactionId = generateTransactionId($row['id']);
+                                    // Determine donor name and email based on is_anonymous flag
+                                    $donor_name_display = $row['is_anonymous'] == 1 ? 'Anonymous Donor' : htmlspecialchars($row['user_name']);
+                                    $donor_email_display = $row['is_anonymous'] == 1 ? 'N/A' : htmlspecialchars($row['email']);
+                                    $donor_picture_display = $row['is_anonymous'] == 1 ? '' : htmlspecialchars($row['picture']);
                                 ?>
                                 <tr>
                                     <td class="transaction-id"><?php echo $transactionId; ?></td>
                                     <td>
                                         <div class="user-info">
                                             <div class="user-avatar">
-                                                <?php if (!empty($row['picture'])): ?>
-                                                    <img src="<?php echo htmlspecialchars($row['picture']); ?>" alt="User Avatar">
+                                                <?php if (!empty($donor_picture_display)): ?>
+                                                    <img src="<?php echo $donor_picture_display; ?>" alt="User Avatar">
                                                 <?php else: ?>
                                                     <?php 
-                                                        $initials = substr($row['user_name'], 0, 1) . 
-                                                                    substr($row['user_name'], strpos($row['user_name'], ' ') + 1, 1);
+                                                        // Display initials or a default icon for anonymous/no picture
+                                                        if ($row['is_anonymous'] == 1) {
+                                                            echo '<i class="fas fa-mask"></i>'; // Icon for anonymous
+                                                        } else {
+                                                            $initials = '';
+                                                            if (!empty($row['user_name'])) {
+                                                                $parts = explode(' ', $row['user_name']);
+                                                                foreach ($parts as $part) {
+                                                                    if (!empty($part)) {
+                                                                        $initials .= strtoupper(substr($part, 0, 1));
+                                                                    }
+                                                                }
+                                                                $initials = substr($initials, 0, 2); // Limit to two initials
+                                                            } else {
+                                                                $initials = '?'; // Fallback if no name
+                                                            }
+                                                            echo $initials;
+                                                        }
                                                     ?>
-                                                    <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">
-                                                        <?php echo strtoupper($initials); ?>
-                                                    </div>
                                                 <?php endif; ?>
                                             </div>
                                             <div class="user-details">
-                                                <div class="user-name"><?php echo htmlspecialchars($row['user_name']); ?></div>
-                                                <div class="user-email"><?php echo htmlspecialchars($row['email']); ?></div>
+                                                <div class="user-name"><?php echo $donor_name_display; ?></div>
+                                                <div class="user-email"><?php echo $donor_email_display; ?></div>
                                             </div>
                                         </div>
                                     </td>

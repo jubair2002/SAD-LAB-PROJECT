@@ -30,18 +30,18 @@ if (!in_array($payment_method, ['credit_card', 'debit_card', 'mobile_banking', '
     exit;
 }
 
-// Check if user is logged in
-$user_logged_in = isset($_SESSION['user_id']);
-$user_id = 0;
-$donor_name = 'Anonymous';
+// Determine user_id and is_anonymous status for database insertion
+$user_id_for_db = null; // Default to NULL for user_id in donations table
+$is_anonymous_for_db = isset($_POST['is_anonymous']) && $_POST['is_anonymous'] == '1' ? 1 : 0; // 1 for TRUE, 0 for FALSE
 
-if ($user_logged_in) {
-    $user_id = $_SESSION['user_id'];
+// If user is logged in AND they did NOT choose to be anonymous
+if (isset($_SESSION['user_id']) && !$is_anonymous_for_db) {
+    $user_id_for_db = $_SESSION['user_id'];
     
-    // Get donor name from database
+    // Get donor name from database for logged-in user
     $user_stmt = $conn->prepare("SELECT name FROM users WHERE id = ?");
     if ($user_stmt) {
-        $user_stmt->bind_param("i", $user_id);
+        $user_stmt->bind_param("i", $user_id_for_db);
         $user_stmt->execute();
         $user_result = $user_stmt->get_result();
         if ($user_row = $user_result->fetch_assoc()) {
@@ -51,15 +51,16 @@ if ($user_logged_in) {
     } else {
         error_log("Failed to prepare user query: " . $conn->error);
     }
-} else {
-    // If not logged in, create a temporary user or use guest account
-    // For demo purposes, we'll use a default guest user ID of 1
-    $user_id = 1; // Guest user ID
-    
-    // You could also store the name and email for receipt purposes
-    $donor_name = $_POST['name'] ?? 'Anonymous';
+} else if (!isset($_SESSION['user_id']) && !$is_anonymous_for_db) {
+    // If not logged in AND not anonymous, capture provided name/email
+    $donor_name = $_POST['name'] ?? 'Guest Donor';
     $donor_email = $_POST['email'] ?? '';
+    // user_id_for_db remains NULL as per your schema for non-logged-in users
+} else {
+    // If anonymous (either logged in or not), donor name is 'Anonymous'
+    $donor_name = 'Anonymous';
 }
+
 
 // Get campaign title for notification
 $campaign_stmt = $conn->prepare("SELECT title FROM campaigns WHERE id = ?");
@@ -85,11 +86,20 @@ $conn->begin_transaction();
 
 try {
     // Insert donation record into the database
-    $stmt = $conn->prepare("INSERT INTO donations (user_id, campaign_id, amount, donation_type) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("iids", $user_id, $campaign_id, $amount, $payment_method);
+    // The 'i' for user_id will correctly handle NULL if the column is nullable in the DB.
+    // Ensure the type definition string matches the number of placeholders and variables.
+    $stmt = $conn->prepare("INSERT INTO donations (user_id, campaign_id, amount, donation_type, is_anonymous) VALUES (?, ?, ?, ?, ?)");
+    
+    // Bind parameters:
+    // 'i' for user_id (integer, handles NULL correctly for nullable columns)
+    // 'i' for campaign_id (integer)
+    // 'd' for amount (double)
+    // 's' for donation_type (string)
+    // 'i' for is_anonymous (integer/boolean)
+    $stmt->bind_param("iidsi", $user_id_for_db, $campaign_id, $amount, $payment_method, $is_anonymous_for_db);
     
     if (!$stmt->execute()) {
-        throw new Exception("Failed to insert donation record");
+        throw new Exception("Failed to insert donation record: " . $stmt->error);
     }
     
     $donation_id = $conn->insert_id;
@@ -103,7 +113,7 @@ try {
     $update_stmt->bind_param("di", $amount, $campaign_id);
     
     if (!$update_stmt->execute()) {
-        throw new Exception("Failed to update campaign");
+        throw new Exception("Failed to update campaign: " . $update_stmt->error);
     }
     $update_stmt->close();
     
@@ -121,7 +131,8 @@ try {
     
     // Prepare notification data
     $notification_title = "New Donation Received";
-    $notification_message = sprintf("New donation received, amount is $%.2f", $amount);
+    $notification_message = sprintf("New donation received for '%s', amount is $%.2f. Donor: %s (Anonymous: %s)", 
+                                    $campaign_title, $amount, $donor_name, ($is_anonymous_for_db ? 'Yes' : 'No'));
     
     // Insert notification for each admin
     $notify_stmt = $conn->prepare("INSERT INTO notifications (recipient_id, sender_id, title, message, entity_type, entity_id) VALUES (?, NULL, ?, ?, 'donation', ?)");

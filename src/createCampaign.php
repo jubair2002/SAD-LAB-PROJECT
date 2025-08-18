@@ -18,7 +18,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $description = $_POST['description'];
     $goal = $_POST['goal'];
     $category = $_POST['category'];
-    
+    $location = $_POST['location'];
+
+
     // Handle the uploaded image
     if (isset($_FILES['image_url']) && $_FILES['image_url']['error'] == 0) {
         $image_tmp_name = $_FILES['image_url']['tmp_name'];
@@ -45,10 +47,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     $status = ($user_role == 'admin') ? 'approved' : 'pending';
-    
-    $stmt = $conn->prepare("INSERT INTO campaigns (name, description, goal, category, image_url, status) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssisss", $name, $description, $goal, $category, $image_path, $status);
-    
+
+    $stmt = $conn->prepare("INSERT INTO campaigns (name, description, goal, category, location, image_url, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("ssissss", $name, $description, $goal, $category, $location, $image_path, $status);
+
     if ($stmt->execute()) {
         header("Location: campaign.php");
         exit();
@@ -56,18 +58,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         echo "Error: " . $stmt->error;
     }
     // After successfully creating a campaign
-$chatSystem = new ChatSystem($conn);
-$chatId = $chatSystem->createCampaignChat($newCampaignId, $_SESSION['user_id']);
+    $chatSystem = new ChatSystem($conn);
+    $chatId = $chatSystem->createCampaignChat($newCampaignId, $_SESSION['user_id']);
 
-// Add all assigned volunteers to the chat
-foreach ($assignedVolunteers as $volunteerId) {
-    $chatSystem->addParticipant($chatId, $volunteerId);
-}
+    // Add all assigned volunteers to the chat
+    foreach ($assignedVolunteers as $volunteerId) {
+        $chatSystem->addParticipant($chatId, $volunteerId);
+    }
 }
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -75,6 +78,7 @@ foreach ($assignedVolunteers as $volunteerId) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="assets/css/createCampaign.css">
 </head>
+
 <body>
     <div class="container">
         <div class="header">
@@ -84,7 +88,7 @@ foreach ($assignedVolunteers as $volunteerId) {
             </a>
         </div>
 
-        <?php if($user_role != 'admin'): ?>
+        <?php if ($user_role != 'admin'): ?>
             <div class="status-notice">
                 <i class="fas fa-info-circle"></i> Your campaign will be reviewed by an admin before approval.
             </div>
@@ -111,6 +115,10 @@ foreach ($assignedVolunteers as $volunteerId) {
                     <label for="category">Category</label>
                     <input type="text" id="category" name="category" required>
                 </div>
+                <div class="form-group">
+                    <label for="location">Location</label>
+                    <input type="text" id="location" name="location" required>
+                </div>
 
                 <div class="form-group">
                     <label for="image_url">Campaign Image</label>
@@ -125,4 +133,5 @@ foreach ($assignedVolunteers as $volunteerId) {
         </div>
     </div>
 </body>
+
 </html>
