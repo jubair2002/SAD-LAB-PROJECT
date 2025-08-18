@@ -37,7 +37,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         $updateQuery = $conn->prepare("UPDATE users SET fname = ?, lname = ?, email = ?, location = ?, phone = ? WHERE id = ?");
         $updateQuery->bind_param("sssssi", $fname, $lname, $email, $location, $phone, $user_id); // Bind parameters
-        
+
         if ($updateQuery->execute()) { // Execute the query and check result
             $_SESSION['success'] = "Profile updated successfully!";
             error_log("Profile update successful");
@@ -45,57 +45,79 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['error'] = "Failed to update profile: " . $conn->error;
             error_log("Profile update failed: " . $conn->error);
         }
-        
+
         // Redirect to refresh page with updated data
         header("Location: profile.php");
         exit();
     }
+}
 
-    // Update Profile Picture
-    if (isset($_POST['upload_picture']) && isset($_FILES['picture'])) {
-        $img_name = $_FILES['picture']['name'];
-        $img_tmp = $_FILES['picture']['tmp_name'];
-        $img_size = $_FILES['picture']['size'];
-        $img_type = strtolower(pathinfo($img_name, PATHINFO_EXTENSION));
+// Update Profile Picture
+if (isset($_POST['upload_picture']) && isset($_FILES['picture'])) {
+    $img_name = $_FILES['picture']['name'];
+    $img_tmp = $_FILES['picture']['tmp_name'];
+    $img_size = $_FILES['picture']['size'];
+    $img_type = strtolower(pathinfo($img_name, PATHINFO_EXTENSION));
 
-        // Validate file type
-        $allowed_types = ['jpg', 'jpeg', 'png', 'gif'];
-        if (!in_array($img_type, $allowed_types)) {
-            $_SESSION['error'] = "Only JPG, JPEG, PNG, and GIF files are allowed!";
-        } elseif ($img_size > 5 * 1024 * 1024) { // 5MB limit
-            $_SESSION['error'] = "File size must be less than 5MB!";
-        } else {
-            // Create uploads folder if not exists
-            $upload_dir = "uploads/";
-            if (!is_dir($upload_dir)) {
-                mkdir($upload_dir, 0777, true);
-            }
-
-            // Create unique file name to avoid conflicts
-            $new_file_name = "user_" . $user_id . "_" . time() . "." . $img_type;
-            $img_path = $upload_dir . $new_file_name;
-
-            if (move_uploaded_file($img_tmp, $img_path)) {
-                // Store in Database
-                $updatePic = $conn->prepare("UPDATE users SET picture = ? WHERE id = ?");
-                $updatePic->bind_param("si", $img_path, $user_id);
-                if ($updatePic->execute()) {
-                    $_SESSION['success'] = "Profile picture updated!";
-                } else {
-                    $_SESSION['error'] = "Database update failed!";
-                }
-            } else {
-                $_SESSION['error'] = "Failed to upload image!";
-            }
+    // Validate file type
+    $allowed_types = ['jpg', 'jpeg', 'png', 'gif'];
+    if (!in_array($img_type, $allowed_types)) {
+        $_SESSION['error'] = "Only JPG, JPEG, PNG, and GIF files are allowed!";
+    } elseif ($img_size > 5 * 1024 * 1024) { // 5MB limit
+        $_SESSION['error'] = "File size must be less than 5MB!";
+    } else {
+        // Create uploads folder if not exists
+        $upload_dir = "uploads/";
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0755, true); // Changed to 0755 for better security
         }
-        header("Location: profile.php");
-        exit();
+
+        // Delete old picture if it exists and is not the default avatar
+        if (
+            !empty($user['picture']) &&
+            file_exists($user['picture']) &&
+            strpos($user['picture'], 'default-avatar.png') === false
+        ) {
+            unlink($user['picture']);
+        }
+
+        // Create unique file name
+        $new_file_name = "user_" . $user_id . "." . $img_type;
+        $img_path = $upload_dir . $new_file_name;
+
+        if (move_uploaded_file($img_tmp, $img_path)) {
+            // Store relative path in database
+            $relative_path = "uploads/" . $new_file_name;
+            $updatePic = $conn->prepare("UPDATE users SET picture = ? WHERE id = ?");
+            $updatePic->bind_param("si", $relative_path, $user_id);
+
+            if ($updatePic->execute()) {
+                // Update session and local user data immediately
+                $_SESSION['picture'] = $relative_path;
+                $user['picture'] = $relative_path;
+                $_SESSION['success'] = "Profile picture updated!";
+
+                // Add cache busting query string to force refresh
+                $cache_buster = "?v=" . time();
+                echo "<script>document.querySelector('.profile-img').src = '" . htmlspecialchars($relative_path) . $cache_buster . "';</script>";
+            } else {
+                $_SESSION['error'] = "Database update failed!";
+                // Remove the uploaded file if DB update failed
+                if (file_exists($img_path)) {
+                    unlink($img_path);
+                }
+            }
+        } else {
+            $_SESSION['error'] = "Failed to upload image! Check folder permissions.";
+        }
     }
+    header("Location: profile.php");
+    exit();
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
@@ -104,7 +126,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <link rel="stylesheet" href="assets/css/profile.css">
     <style>
         /* Additional inline styles to ensure full screen */
-        html, body {
+        html,
+        body {
             margin: 0;
             padding: 0;
             height: 100vh;
@@ -116,7 +139,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             right: 0;
             bottom: 0;
         }
-        
+
         .profile-dashboard {
             position: absolute;
             top: 0;
@@ -128,21 +151,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     </style>
 </head>
+
 <body>
     <div class="profile-dashboard">
         <!-- Left Sidebar -->
         <div class="profile-sidebar">
             <div class="sidebar-header">
                 <div class="profile-img-container">
-                    <img src="<?php echo htmlspecialchars($user['picture'] ?: 'assets/images/default-avatar.png'); ?>" alt="Profile Picture" class="profile-img">
-                    <label for="picture-upload" class="camera-icon">
+                    <img src="<?php echo htmlspecialchars($user['picture'] ?: 'assets/images/default-avatar.png'); ?>?v=<?php echo time(); ?>" alt="Profile Picture" class="profile-img"> <label for="picture-upload" class="camera-icon">
                         <i class="fas fa-camera"></i>
                     </label>
                 </div>
                 <h2 class="profile-name"><?php echo htmlspecialchars($user['fname'] . ' ' . $user['lname']); ?></h2>
                 <p class="profile-email"><?php echo htmlspecialchars($user['email']); ?></p>
             </div>
-            
+
             <div class="sidebar-menu">
                 <div class="menu-item active" data-tab="profile-info">
                     <i class="fas fa-user"></i>
@@ -150,30 +173,32 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 </div>
             </div>
         </div>
-        
+
         <!-- Main Content Area -->
         <div class="profile-content">
             <div class="content-header">
                 <h1 class="content-title">Profile Information</h1>
                 <p class="content-subtitle">Manage your personal information</p>
             </div>
-            
+
             <div class="content-body">
                 <!-- Success & Error Messages -->
                 <?php if (isset($_SESSION['success'])): ?>
                     <div class="alert alert-success">
                         <i class="fas fa-check-circle"></i>
-                        <?php echo htmlspecialchars($_SESSION['success']); unset($_SESSION['success']); ?>
+                        <?php echo htmlspecialchars($_SESSION['success']);
+                        unset($_SESSION['success']); ?>
                     </div>
                 <?php endif; ?>
-                
+
                 <?php if (isset($_SESSION['error'])): ?>
                     <div class="alert alert-error">
                         <i class="fas fa-exclamation-circle"></i>
-                        <?php echo htmlspecialchars($_SESSION['error']); unset($_SESSION['error']); ?>
+                        <?php echo htmlspecialchars($_SESSION['error']);
+                        unset($_SESSION['error']); ?>
                     </div>
                 <?php endif; ?>
-                
+
                 <!-- Profile Info Tab -->
                 <div class="tab-content active" id="profile-info">
                     <!-- Personal Information Section -->
@@ -197,12 +222,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         <input type="text" name="lname" value="<?php echo htmlspecialchars($user['lname']); ?>" class="form-control" required>
                                     </div>
                                 </div>
-                                
+
                                 <div class="form-group">
                                     <label class="form-label">Email Address</label>
                                     <input type="email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>" class="form-control" required>
                                 </div>
-                                
+
                                 <div class="form-grid">
                                     <div class="form-group">
                                         <label class="form-label">Phone Number</label>
@@ -213,7 +238,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         <input type="text" name="location" value="<?php echo htmlspecialchars($user['location']); ?>" class="form-control" required>
                                     </div>
                                 </div>
-                                
+
                                 <input type="hidden" name="debug_info" value="1">
                                 <button type="submit" name="update_profile" class="btn btn-primary">
                                     <i class="fas fa-save"></i> Save Changes
@@ -221,7 +246,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             </form>
                         </div>
                     </div>
-                    
+
                     <!-- Profile Picture Section -->
                     <div class="form-section">
                         <div class="form-section-header">
@@ -239,6 +264,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     <div class="upload-subtext">JPG, PNG, GIF up to 5MB</div>
                                 </div>
                                 <input type="file" id="picture-upload" name="picture" class="form-control" accept="image/*" required style="display: none;">
+                                <input type="hidden" name="upload_picture" value="1">
                                 <div class="form-text">Choose a clear, professional photo that represents you well.</div>
                                 <button type="submit" name="upload_picture" class="btn btn-success" style="margin-top: 15px;">
                                     <i class="fas fa-upload"></i> Upload Picture
@@ -263,7 +289,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             picture: '<?php echo addslashes($user['picture']); ?>'
         };
     </script>
-    
+
     <script src="assets/js/profile.js"></script>
 </body>
+
 </html>

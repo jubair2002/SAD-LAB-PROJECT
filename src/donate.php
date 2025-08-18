@@ -40,7 +40,6 @@ $user_id = $user_logged_in ? $_SESSION['user_id'] : 0;
     <link rel="stylesheet" href="assets/css/donation.css">
     
     <style>
-        /* Additional responsive optimizations */
         @media (max-width: 768px) {
             .header {
                 flex-direction: column;

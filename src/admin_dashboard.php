@@ -3,22 +3,20 @@
 require_once 'config.php';
 require_once 'dashboard_base.php';
 
-// Check if user has admin access
+// Check admin access
 checkAccess('admin');
 
 // Get user details
 $user = getUserDetails($conn, $_SESSION['user_id']);
 
-// Get current page from URL parameter or use dashboard as default
 $current_page = isset($_GET['page']) ? $_GET['page'] : 'dashboardSummary';
 $valid_pages = ['dashboardSummary', 'user_management', 'message', 'campaignSummary', 'transections', 'settings', 'profile'];
 
-// Validate the page parameter
 if (!in_array($current_page, $valid_pages)) {
     $current_page = 'dashboardSummary';
 }
 
-// Set the page file to load
+//  page load
 $page_file = $current_page . '.php';
 ?>
 
@@ -31,23 +29,19 @@ $page_file = $current_page . '.php';
 
     <!-- Boxicons -->
     <link href='https://unpkg.com/boxicons@2.0.9/css/boxicons.min.css' rel='stylesheet'>
-    <!-- My CSS -->
     <link rel="stylesheet" href="assets/css/adminDashboard.css">
 
     <style>
-        /* Iframe Specific Styles */
         #content-iframe {
             width: 100%;
             border: none;
             min-height: calc(100vh - 100px);
-            /* Adjust based on your navbar height */
         }
 
         .side-menu a {
             cursor: pointer;
         }
 
-        /* Override colors to match design */
         :root {
             --light: #F9F9F9;
             --green: #4CAF50;
@@ -58,7 +52,6 @@ $page_file = $current_page . '.php';
             --red: #DB504A;
         }
 
-        /* Override blue with green */
         #sidebar .brand {
             color: var(--green);
         }
@@ -192,7 +185,6 @@ $page_file = $current_page . '.php';
         </nav>
         <!-- NAVBAR -->
 
-        <!-- MAIN - Replace with iframe -->
         <main>
             <iframe id="content-iframe" src="<?php echo htmlspecialchars($page_file); ?>" frameborder="0"></iframe>
         </main>
@@ -208,7 +200,6 @@ $page_file = $current_page . '.php';
             sidebar.classList.toggle('hide');
         });
 
-        // RESPONSIVE BEHAVIOR
         if (window.innerWidth < 768) {
             sidebar.classList.add('hide');
         }
@@ -219,7 +210,6 @@ $page_file = $current_page . '.php';
             }
         });
 
-        // Optional: Resize iframe to content
         document.getElementById('content-iframe').addEventListener('load', function() {
             try {
                 this.style.height = this.contentWindow.document.body.scrollHeight + 'px';
@@ -235,10 +225,8 @@ $page_file = $current_page . '.php';
             const notificationContent = document.getElementById('notification-content');
             const notificationBadge = document.getElementById('notification-badge');
 
-            // Load initial notification count
             loadNotificationCount();
 
-            // Toggle notification popup
             notificationBell.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -251,20 +239,17 @@ $page_file = $current_page . '.php';
                 }
             });
 
-            // Close popup when clicking outside
             document.addEventListener('click', function(e) {
                 if (!notificationBell.contains(e.target)) {
                     notificationPopup.classList.remove('show');
                 }
             });
 
-            // Load notifications via AJAX
             function loadNotifications() {
                 fetch('get_notifications.php')
                     .then(response => response.text())
                     .then(data => {
                         notificationContent.innerHTML = data;
-                        // Update count after loading notifications
                         loadNotificationCount();
                     })
                     .catch(error => {

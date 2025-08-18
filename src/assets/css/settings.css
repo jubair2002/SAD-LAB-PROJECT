@@ -1,16 +1,16 @@
-/* Minimal Full-Screen Settings CSS */
+/* Updated Settings CSS for minimal black/white/green theme */
 :root {
-  --primary: #4CAF50;
+  --primary: #4CAF50; /* A good, clean green */
   --primary-dark: #3e8e41;
-  --bg: #f8f9fa;
-  --card-bg: #ffffff;
-  --text: #333333;
-  --text-light: #6c757d;
-  --border: #e0e0e0;
-  --success: #28a745;
-  --error: #dc3545;
-  --radius: 6px;
-  --shadow: 0 2px 8px rgba(0,0,0,0.05);
+  --bg: #f5f5f5; /* Light grey background */
+  --card-bg: #ffffff; /* White card background */
+  --text: #333333; /* Dark grey for main text */
+  --text-light: #666666; /* Lighter grey for descriptions */
+  --border: #dddddd; /* Light grey border */
+  --success: #28a745; /* Green for success messages */
+  --error: #dc3545; /* Red for error messages (kept for clarity) */
+  --radius: 8px; /* Slightly more rounded corners */
+  --shadow: 0 4px 12px rgba(0,0,0,0.08); /* More pronounced, but soft shadow */
 }
 
 * {
@@ -28,157 +28,149 @@ html, body {
 body {
   display: flex;
   color: var(--text);
+  line-height: 1.6;
 }
 
 .settings-container {
-  display: flex;
   width: 100%;
-  height: 100vh;
-}
-
-.settings-sidebar {
-  width: 280px;
-  padding: 2rem 1.5rem;
-  background: var(--card-bg);
-  border-right: 1px solid var(--border);
-  overflow-y: auto;
-}
-
-.settings-nav {
-  list-style: none;
-}
-
-.settings-nav li {
-  margin-bottom: 0.5rem;
-}
-
-.settings-nav a {
-  display: flex;
-  align-items: center;
-  padding: 0.75rem 1rem;
-  color: var(--text-light);
-  text-decoration: none;
-  border-radius: var(--radius);
-  transition: all 0.2s ease;
-}
-
-.settings-nav a:hover {
-  background: rgba(0,0,0,0.03);
-}
-
-.settings-nav a.active {
-  background: rgba(76, 175, 80, 0.1);
-  color: var(--primary);
-  font-weight: 500;
-}
-
-.settings-nav i {
-  width: 24px;
-  margin-right: 12px;
-  font-size: 1.1rem;
+  max-width: 700px; /* Slightly narrower for a more focused look */
+  margin: 3rem auto; /* More vertical margin */
+  padding: 0 1.5rem;
 }
 
 .settings-content {
-  flex: 1;
-  padding: 2rem 3rem;
-  overflow-y: auto;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 2.5rem; /* Increased padding */
 }
 
 .section {
-  max-width: 800px;
-  margin: 0 auto;
+  margin-bottom: 2.5rem; /* Space between sections */
+  border: 1px solid var(--border); /* Subtle border for separation */
+  padding: 2rem;
+  border-radius: var(--radius);
+  background-color: var(--card-bg); /* Ensure consistent background */
+}
+
+.section:last-child {
+  margin-bottom: 0; /* No margin after the last section */
 }
 
 .section-title {
-  font-size: 1.5rem;
-  margin-bottom: 2rem;
-  font-weight: 600;
+  font-size: 1.6rem; /* Slightly larger title */
+  margin-bottom: 1rem;
+  font-weight: 700; /* Bolder title */
   display: flex;
   align-items: center;
   gap: 12px;
+  color: var(--primary); /* Green title */
+}
+
+.section-description {
+  color: var(--text-light);
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.2rem; /* Slightly less space between form groups */
 }
 
 .form-label {
   display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
+  margin-bottom: 0.6rem;
+  font-weight: 600; /* Bolder label */
+  color: var(--text);
 }
 
 .form-control {
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: 0.8rem 1rem; /* Slightly more vertical padding */
   border: 1px solid var(--border);
   border-radius: var(--radius);
   font-size: 1rem;
-  transition: border 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .form-control:focus {
   border-color: var(--primary);
   outline: none;
-  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2); /* Slightly stronger focus shadow */
 }
 
 .btn {
-  padding: 0.75rem 1.5rem;
+  padding: 0.8rem 1.8rem; /* Larger button padding */
   background: var(--primary);
   color: white;
   border: none;
   border-radius: var(--radius);
-  font-weight: 500;
+  font-weight: 600; /* Bolder button text */
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.2s ease, transform 0.1s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .btn:hover {
   background: var(--primary-dark);
+  transform: translateY(-1px); /* Subtle lift effect */
 }
 
 .alert {
-  padding: 1rem;
+  padding: 1rem 1.25rem; /* Slightly more horizontal padding */
   border-radius: var(--radius);
-  margin-bottom: 2rem;
+  margin-bottom: 1.8rem; /* More space below alerts */
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  font-size: 0.95rem;
 }
 
 .alert-success {
-  background: rgba(40, 167, 69, 0.1);
+  background: rgba(40, 167, 69, 0.15); /* Slightly more opaque success background */
   color: var(--success);
+  border: 1px solid var(--success); /* Border for success */
 }
 
 .alert-error {
-  background: rgba(220, 53, 69, 0.1);
+  background: rgba(220, 53, 69, 0.15); /* Slightly more opaque error background */
   color: var(--error);
+  border: 1px solid var(--error); /* Border for error */
 }
 
-/* No scrolling - content fits screen */
-@media (max-height: 800px) {
-  .settings-content {
-    padding-bottom: 3rem;
-  }
+/* Specific styling for placeholder content */
+.section p:last-child {
+  margin-bottom: 0;
+  color: var(--text-light);
+  font-style: italic;
+  font-size: 0.9em;
 }
+
 
 /* Mobile responsive */
 @media (max-width: 768px) {
   .settings-container {
-    flex-direction: column;
-    height: auto;
-    min-height: 100vh;
-  }
-  
-  .settings-sidebar {
-    width: 100%;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
+    margin: 1.5rem auto;
+    padding: 0 1rem;
   }
   
   .settings-content {
-    padding: 2rem;
+    padding: 1.5rem;
+  }
+
+  .section {
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .section-title {
+    font-size: 1.3rem;
+  }
+
+  .btn {
+    width: 100%; /* Full width button on small screens */
+    justify-content: center;
   }
 }

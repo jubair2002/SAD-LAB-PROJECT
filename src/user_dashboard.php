@@ -1,9 +1,7 @@
 <?php
-// user_dashboard.php
 require_once 'config.php';
 require_once 'dashboard_base.php';
 
-// Check if user has regular user access
 checkAccess('regular');
 
 // Get user details

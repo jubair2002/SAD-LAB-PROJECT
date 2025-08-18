@@ -101,30 +101,41 @@ function handleLogin($conn)
     $email = trim($_POST['email']);
     $password = $_POST['password'];
 
-    $stmt = $conn->prepare("SELECT id, fname, user_type, password FROM users WHERE email = ?");
+    // Updated SQL query to also select the 'status'
+    $stmt = $conn->prepare("SELECT id, fname, user_type, password, status FROM users WHERE email = ?");
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
         $user = $result->fetch_assoc();
+        
+        // Verify password
         if (password_verify($password, $user['password'])) {
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['username'] = $user['fname'];
-            $_SESSION['user_type'] = $user['user_type'];
+            // Check user status
+            if ($user['status'] == 'active') {
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['username'] = $user['fname'];
+                $_SESSION['user_type'] = $user['user_type'];
 
-            // Redirect based on user type
-            if ($user['user_type'] == 'admin') {
-                header("Location: admin_dashboard.php");
-            } elseif ($user['user_type'] == 'volunteer') {
-                header("Location: volunteer_dashboard.php");
+                // Redirect based on user type
+                if ($user['user_type'] == 'admin') {
+                    header("Location: admin_dashboard.php");
+                } elseif ($user['user_type'] == 'volunteer') {
+                    header("Location: volunteer_dashboard.php");
+                } else {
+                    header("Location: user_dashboard.php");
+                }
+                exit();
             } else {
-                header("Location: user_dashboard.php");
+                $error = "Your account is currently inactive. Please contact Admin Support.";
             }
-            exit();
+        } else {
+            $error = "Invalid email or password."; // Keep general for security
         }
+    } else {
+        $error = "Invalid email or password."; // Keep general for security
     }
-    $error = "Invalid email or password";
 }
 
 // Registration handler

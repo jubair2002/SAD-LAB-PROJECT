@@ -3,15 +3,13 @@
 require_once 'config.php';
 require_once 'dashboard_base.php';
 
-// Check if user has volunteer access
 checkAccess('volunteer');
 
 // Get user details
 $user = getUserDetails($conn, $_SESSION['user_id']);
 
-// Get current page from URL parameter or use dashboard as default
 $current_page = isset($_GET['page']) ? $_GET['page'] : 'dashboardSummaryVR';
-$valid_pages = ['dashboardSummaryVR', 'assignments', 'message', 'campaign', 'reports', 'emergency', 'settings', 'profile'];
+$valid_pages = ['dashboardSummaryVR', 'createCampaign1','assignments', 'message', 'campaign', 'reports', 'emergency', 'settings', 'profile'];
 
 // Validate the page parameter
 if (!in_array($current_page, $valid_pages)) {
@@ -130,6 +128,12 @@ $page_file = $current_page . '.php';
                 <a href="?page=campaign">
                     <i class='bx bxs-megaphone'></i>
                     <span class="text">Campaign</span>
+                </a>
+            </li>
+            <li <?php echo ($current_page == 'createCampaign1') ? 'class="active"' : ''; ?>>
+                <a href="?page=createCampaign1">
+                    <i class='bx bxs-megaphone'></i>
+                    <span class="text">Create Campaign</span>
                 </a>
             </li>
             <li <?php echo ($current_page == 'reports') ? 'class="active"' : ''; ?>>

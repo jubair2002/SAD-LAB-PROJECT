@@ -316,7 +316,7 @@ function handleFileSelection(file) {
     }
     
     // Show preview
-    const reader = new FileReader();
+   const reader = new FileReader();
     reader.onload = function(e) {
         const profileImg = document.querySelector('.profile-img');
         if (profileImg) {
@@ -325,11 +325,12 @@ function handleFileSelection(file) {
             setTimeout(() => {
                 profileImg.style.transform = 'scale(1)';
             }, 300);
+            
+            // Immediately submit the form
+            document.getElementById('picture-form').submit();
         }
     };
     reader.readAsDataURL(file);
-    
-    showMessage('Image selected successfully! Click "Upload Picture" to save.', 'success');
 }
 
 // ===== ANIMATIONS =====
