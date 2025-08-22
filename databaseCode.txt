@@ -1,32 +1,28 @@
-
-INSERT INTO users (fname, lname, email, password, location, user_type) 
-VALUES ('Admin', 'User', 'admin@crisislink.org', '[hashed_password]', 'Main Office', 'admin');
-
-
+-- Users Table
 CREATE TABLE users (
     id INT PRIMARY KEY AUTO_INCREMENT,
     fname VARCHAR(50) NOT NULL,
     lname VARCHAR(50) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
-    phone VARCHAR(20) NOT NULL, -- Added phone number (mandatory)
+    phone VARCHAR(20) NOT NULL,
     password VARCHAR(255) NOT NULL,
     picture VARCHAR(255) NOT NULL,
     location VARCHAR(100) NOT NULL,
     user_type ENUM('volunteer', 'regular', 'admin') NOT NULL,
-    status ENUM('active', 'inactive') NOT NULL DEFAULT 'active', -- Added status field
+    status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
     reset_token VARCHAR(64) DEFAULT NULL,
     reset_expires DATETIME DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-
-
+-- Campaigns Table
 CREATE TABLE campaigns (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
     image_url VARCHAR(255) NOT NULL,
     category VARCHAR(100) NOT NULL,
+    location VARCHAR(100) NOT NULL,
     goal DECIMAL(10, 2) NOT NULL,
     raised DECIMAL(10, 2) DEFAULT 0,
     allocated DECIMAL(10, 2) DEFAULT 0,
@@ -39,55 +35,52 @@ CREATE TABLE campaigns (
     status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
     progress ENUM('ongoing', 'end') DEFAULT 'ongoing'
 );
-ALTER TABLE campaigns ADD COLUMN location VARCHAR(100) NOT NULL AFTER category;
 
+-- Assignments Table
 CREATE TABLE assignments (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    campaign_id INT NOT NULL,           -- The campaign this task is part of
-    volunteer_id INT NOT NULL,          -- The volunteer assigned to this task
-    task_name VARCHAR(255) NOT NULL,    -- Task name
-    description TEXT NOT NULL,         -- Task description
-    priority ENUM('low', 'medium', 'high') NOT NULL,  -- Task priority
-    deadline DATETIME NOT NULL,        -- Task deadline
-    status ENUM('assigned', 'in-progress', 'completed', 'rejected', 'not-started') DEFAULT 'assigned',  -- Task status
+    campaign_id INT NOT NULL,
+    volunteer_id INT NOT NULL,
+    task_name VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    priority ENUM('low', 'medium', 'high') NOT NULL,
+    deadline DATETIME NOT NULL,
+    status ENUM('assigned', 'in-progress', 'completed', 'rejected', 'not-started') DEFAULT 'assigned',
+    volunteer_response ENUM('pending', 'accepted', 'rejected') DEFAULT 'pending',
+    response_date DATETIME NULL,
+    completed_at DATETIME NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (campaign_id) REFERENCES campaigns(id),
     FOREIGN KEY (volunteer_id) REFERENCES users(id)
 );
 
-ALTER TABLE assignments 
-ADD COLUMN volunteer_response ENUM('pending', 'accepted', 'rejected') DEFAULT 'pending',
-ADD COLUMN response_date DATETIME NULL;
-ALTER TABLE assignments ADD COLUMN completed_at DATETIME NULL;
-
-
-
+-- Tasks Table (Subtasks under assignments)
 CREATE TABLE tasks (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    assignment_id INT NOT NULL,        -- The assignment this task is part of
-    task_name VARCHAR(255) NOT NULL,    -- Subtask name
-    description TEXT NOT NULL,         -- Subtask description
-    priority ENUM('low', 'medium', 'high') NOT NULL,  -- Task priority
-    deadline DATETIME NOT NULL,        -- Task deadline
-    status ENUM('assigned', 'in-progress', 'completed', 'rejected', 'not-started') DEFAULT 'assigned',  -- Task status
+    assignment_id INT NOT NULL,
+    task_name VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    priority ENUM('low', 'medium', 'high') NOT NULL,
+    deadline DATETIME NOT NULL,
+    status ENUM('assigned', 'in-progress', 'completed', 'rejected', 'not-started') DEFAULT 'assigned',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (assignment_id) REFERENCES assignments(id)
 );
 
+-- Donations Table
 CREATE TABLE donations (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,  -- FK to users table
-    campaign_id INT NOT NULL,  -- FK to campaigns table
+    user_id INT NULL,
+    campaign_id INT NOT NULL,
     amount DECIMAL(10, 2) NOT NULL,
     donation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    donation_type ENUM('mobile_banking', 'credit_card', 'debit_card', 'bank_transfer') NOT NULL,  -- New column to store donation type
+    donation_type ENUM('mobile_banking', 'credit_card', 'debit_card', 'bank_transfer') NOT NULL,
+    is_anonymous BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (campaign_id) REFERENCES campaigns(id)
 );
 
-ALTER TABLE donations MODIFY COLUMN user_id INT NULL;
-ALTER TABLE donations ADD COLUMN is_anonymous BOOLEAN DEFAULT FALSE;
-
+-- Chat Rooms Table
 CREATE TABLE chat_rooms (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -102,6 +95,7 @@ CREATE TABLE chat_rooms (
     FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE SET NULL
 );
 
+-- Chat Participants Table
 CREATE TABLE chat_participants (
     id INT AUTO_INCREMENT PRIMARY KEY,
     chat_room_id INT NOT NULL,
@@ -115,7 +109,7 @@ CREATE TABLE chat_participants (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-
+-- Messages Table
 CREATE TABLE messages (
     id INT AUTO_INCREMENT PRIMARY KEY,
     chat_room_id INT NOT NULL,
@@ -132,7 +126,7 @@ CREATE TABLE messages (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-
+-- Relief Categories Table
 CREATE TABLE relief_categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
     category_name VARCHAR(100) NOT NULL,
@@ -141,20 +135,7 @@ CREATE TABLE relief_categories (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-
--- Insert some sample relief categories
-INSERT INTO relief_categories (category_name, description) VALUES
-('Food & Water', 'Emergency food supplies and clean drinking water'),
-('Medical Supplies', 'Medicine, first aid kits, and medical equipment'),
-('Shelter', 'Temporary housing, tents, and building materials'),
-('Clothing', 'Clothes, blankets, and personal hygiene items'),
-('Education', 'School supplies, books, and educational materials'),
-('Transportation', 'Fuel, vehicle maintenance, and transport services'),
-('Emergency Response', 'Immediate disaster response and rescue operations'),
-('Infrastructure', 'Rebuilding roads, bridges, and essential facilities');
-
-
--- Table for campaign allocations
+-- Campaign Allocations Table
 CREATE TABLE campaign_allocations (
     id INT AUTO_INCREMENT PRIMARY KEY,
     campaign_id INT NOT NULL,
@@ -170,42 +151,31 @@ CREATE TABLE campaign_allocations (
     INDEX idx_date (date_allocated)
 );
 
-
+-- Notifications Table
 CREATE TABLE notifications (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    recipient_id INT NOT NULL,          -- Who receives the notification
-    sender_id INT,                      -- Who sent it (NULL for system notifications)
-    title VARCHAR(100) NOT NULL,        -- Short notification title
-    message TEXT NOT NULL,              -- Full notification content
-    is_read BOOLEAN DEFAULT FALSE,      -- Read status
-    entity_type ENUM(                   -- Which type of entity triggered this
-        'campaign',
-        'assignment', 
-        'task',
-        'donation'
-    ) NOT NULL,
-    entity_id INT NOT NULL,             -- ID of the related entity
+    recipient_id INT NOT NULL,
+    sender_id INT,
+    title VARCHAR(100) NOT NULL,
+    message TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    entity_type ENUM('campaign', 'assignment', 'task', 'donation') NOT NULL,
+    entity_id INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    -- Foreign key to ensure recipient exists
     FOREIGN KEY (recipient_id) REFERENCES users(id) ON DELETE CASCADE,
-    
-    -- Optional foreign key if sender is a user
     FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE SET NULL,
-    
-    -- Indexes for performance
     INDEX idx_recipient (recipient_id),
     INDEX idx_unread (recipient_id, is_read),
     INDEX idx_entity (entity_type, entity_id)
 );
 
--- Blood Donor Profiles Table
+-- Blood Donors Table
 CREATE TABLE blood_donors (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     blood_type ENUM('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-') NOT NULL,
     age INT NOT NULL,
-    weight DECIMAL(5,2) NOT NULL, -- in kg
+    weight DECIMAL(5,2) NOT NULL,
     last_donation_date DATE DEFAULT NULL,
     medical_conditions TEXT DEFAULT NULL,
     emergency_contact VARCHAR(20) NOT NULL,
@@ -236,7 +206,7 @@ CREATE TABLE blood_requests (
     FOREIGN KEY (requester_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Donation Responses Table (when donors respond to requests)
+-- Donation Responses Table
 CREATE TABLE donation_responses (
     id INT PRIMARY KEY AUTO_INCREMENT,
     request_id INT NOT NULL,
@@ -270,7 +240,7 @@ CREATE TABLE donation_history (
     FOREIGN KEY (request_id) REFERENCES blood_requests(id) ON DELETE SET NULL
 );
 
--- Create indexes for better performance
+-- Create additional indexes for better performance
 CREATE INDEX idx_blood_donors_blood_type ON blood_donors(blood_type);
 CREATE INDEX idx_blood_donors_availability ON blood_donors(availability_status);
 CREATE INDEX idx_blood_donors_location ON blood_donors(user_id);
@@ -279,3 +249,18 @@ CREATE INDEX idx_blood_requests_status ON blood_requests(request_status);
 CREATE INDEX idx_blood_requests_urgency ON blood_requests(urgency);
 CREATE INDEX idx_donation_responses_status ON donation_responses(response_status);
 CREATE INDEX idx_donation_history_date ON donation_history(donation_date);
+
+-- Insert sample relief categories
+INSERT INTO relief_categories (category_name, description) VALUES
+('Food & Water', 'Emergency food supplies and clean drinking water'),
+('Medical Supplies', 'Medicine, first aid kits, and medical equipment'),
+('Shelter', 'Temporary housing, tents, and building materials'),
+('Clothing', 'Clothes, blankets, and personal hygiene items'),
+('Education', 'School supplies, books, and educational materials'),
+('Transportation', 'Fuel, vehicle maintenance, and transport services'),
+('Emergency Response', 'Immediate disaster response and rescue operations'),
+('Infrastructure', 'Rebuilding roads, bridges, and essential facilities');
+
+-- Insert default admin user
+INSERT INTO users (fname, lname, email, phone, password, picture, location, user_type) 
+VALUES ('Admin', 'User', 'admin@crisislink.org', '+1234567890', '[hashed_password]', 'default_avatar.jpg', 'Main Office', 'admin');
